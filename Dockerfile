@@ -1,6 +1,6 @@
-FROM alpine:3.7
+FROM alpine:3.10
 
-ENV ANSIBLE_VERSION 2.5.0
+ENV ANSIBLE_VERSION 2.8.0
 
 ENV BUILD_PACKAGES \
   bash \
@@ -9,13 +9,7 @@ ENV BUILD_PACKAGES \
   openssh-client \
   sshpass \
   git \
-  python \
-  py-boto \
-  py-dateutil \
-  py-httplib2 \
-  py-jinja2 \
-  py-paramiko \
-  py-pip \
+  python3 \
   py-yaml \
   ca-certificates
 
@@ -31,15 +25,20 @@ RUN set -x && \
       musl-dev \
       libffi-dev \
       openssl-dev \
-      python-dev && \
+      python3-dev && \
     \
     echo "==> Upgrading apk and system..."  && \
     apk update && apk upgrade && \
     \
     echo "==> Adding Python runtime..."  && \
     apk add --no-cache ${BUILD_PACKAGES} && \
-    pip install --upgrade pip && \
-    pip install python-keyczar docker-py && \
+    if [ ! -e /usr/bin/python ]; then ln -sf python3 /usr/bin/python ; fi && \
+    \
+    echo "**** install pip ****" && \
+    python3 -m ensurepip && \
+    rm -r /usr/lib/python*/ensurepip && \
+    pip3 install --no-cache --upgrade pip setuptools wheel && \
+    if [ ! -e /usr/bin/pip ]; then ln -s pip3 /usr/bin/pip ; fi && \
     \
     echo "==> Installing Ansible..."  && \
     pip install ansible==${ANSIBLE_VERSION} && \
